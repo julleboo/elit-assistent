@@ -46,37 +46,33 @@ NEGATIVE_WORDS = {"customer", "service", "contact", "email", "representative", "
 # --- SINGLETON-KLIENT ---
 @st.cache_resource
 def get_search_client():
-    try:
-        # 1. Hämta projekt-ID och klientinställningar
-        # Vi använder beta-klienten om du använder de senaste funktionerna
-        from google.cloud import discoveryengine_v1beta as discoveryengine
+    # Vi importerar v1beta explicit för att stödja alla funktioner
+    from google.cloud import discoveryengine_v1beta as discoveryengine
+    
+    client_options = ClientOptions(api_endpoint="discoveryengine.googleapis.com")
+
+    # 1. Hämta credentials från Streamlit Secrets
+    if "GOOGLE_CREDENTIALS" in st.secrets:
+        # Konvertera AttrDict till en ren Python dict
+        creds_dict = dict(st.secrets["GOOGLE_CREDENTIALS"])
         
-        client_options = ClientOptions(api_endpoint="discoveryengine.googleapis.com")
-
-        # 2. Kontrollera om vi har GOOGLE_CREDENTIALS i secrets
-        if "GOOGLE_CREDENTIALS" in st.secrets:
-            logger.info("Använder GOOGLE_CREDENTIALS från Streamlit Secrets")
-            
-            # Konvertera secrets-objektet till en vanlig dictionary
-            creds_info = dict(st.secrets["GOOGLE_CREDENTIALS"])
-            
-            creds = service_account.Credentials.from_service_account_info(
-                creds_info,
-                scopes=["https://www.googleapis.com/auth/cloud-platform"],
-            )
-            return discoveryengine.SearchServiceClient(
-                credentials=creds, 
-                client_options=client_options
-            )
-
-        # 3. Fallback för lokal utveckling (om du kör gcloud auth application-default login)
-        logger.warning("Inga GOOGLE_CREDENTIALS funna. Faller tillbaka på miljövariabler.")
-        return discoveryengine.SearchServiceClient(client_options=client_options)
-
-    except Exception as e:
-        logger.error(f"Kritisk autentiseringsfel: {str(e)}")
-        st.error(f"Kunde inte ansluta till Google Cloud: {e}")
-        st.stop()
+        # Skapa credentials objektet explicit
+        creds = service_account.Credentials.from_service_account_info(
+            creds_dict,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        
+        logger.info("✅ Autentiserar med Service Account från secrets.")
+        
+        # Returnera klienten med EXPLICITA credentials
+        return discoveryengine.SearchServiceClient(
+            credentials=creds, 
+            client_options=client_options
+        )
+    
+    # 2. Om vi inte hittar secrets (t.ex. lokalt), försök med ADC
+    logger.warning("⚠️ Hittade inga credentials i secrets. Försöker med standard.")
+    return discoveryengine.SearchServiceClient(client_options=client_options)
 
 # --- HJÄLPFUNKTIONER (Från logic.py) ---
 
