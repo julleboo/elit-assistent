@@ -1,0 +1,3 @@
+google-cloud-discoveryengine
+google-api-core
+streamlit
