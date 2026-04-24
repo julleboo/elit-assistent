@@ -8,10 +8,6 @@ import streamlit as st
 from google.cloud import discoveryengine
 from google.api_core.client_options import ClientOptions
 from google.oauth2 import service_account
-from dotenv import load_dotenv
-
-# --- INITIALISERING ---
-load_dotenv()
 
 # --- LOGGNING ---
 logging.basicConfig(level=logging.INFO)

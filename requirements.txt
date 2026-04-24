@@ -1,3 +1,5 @@
 google-cloud-discoveryengine
 google-api-core
+google-auth
+python-dotenv
 streamlit
