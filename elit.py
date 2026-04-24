@@ -47,16 +47,35 @@ NEGATIVE_WORDS = {"customer", "service", "contact", "email", "representative", "
 @st.cache_resource
 def get_search_client():
     try:
+        # 1. Hämta projekt-ID och klientinställningar
+        # Vi använder beta-klienten om du använder de senaste funktionerna
+        from google.cloud import discoveryengine_v1beta as discoveryengine
+        
         client_options = ClientOptions(api_endpoint="discoveryengine.googleapis.com")
+
+        # 2. Kontrollera om vi har GOOGLE_CREDENTIALS i secrets
         if "GOOGLE_CREDENTIALS" in st.secrets:
+            logger.info("Använder GOOGLE_CREDENTIALS från Streamlit Secrets")
+            
+            # Konvertera secrets-objektet till en vanlig dictionary
+            creds_info = dict(st.secrets["GOOGLE_CREDENTIALS"])
+            
             creds = service_account.Credentials.from_service_account_info(
-                dict(st.secrets["GOOGLE_CREDENTIALS"]),
+                creds_info,
                 scopes=["https://www.googleapis.com/auth/cloud-platform"],
             )
-            return discoveryengine.SearchServiceClient(credentials=creds, client_options=client_options)
+            return discoveryengine.SearchServiceClient(
+                credentials=creds, 
+                client_options=client_options
+            )
+
+        # 3. Fallback för lokal utveckling (om du kör gcloud auth application-default login)
+        logger.warning("Inga GOOGLE_CREDENTIALS funna. Faller tillbaka på miljövariabler.")
         return discoveryengine.SearchServiceClient(client_options=client_options)
+
     except Exception as e:
-        st.error(f"Kunde inte initiera Vertex AI: {e}")
+        logger.error(f"Kritisk autentiseringsfel: {str(e)}")
+        st.error(f"Kunde inte ansluta till Google Cloud: {e}")
         st.stop()
 
 # --- HJÄLPFUNKTIONER (Från logic.py) ---
