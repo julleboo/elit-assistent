@@ -1,0 +1,10 @@
+# Python miljö
+venv/
+__pycache__/
+*.pyc
+
+# Google Cloud nycklar (Viktigt!)
+*.json
+
+# Streamlit config
+.streamlit/
